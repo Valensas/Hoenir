@@ -9,7 +9,12 @@ data class VirtualService(
     private val apiVersion: String,
     private val kind: String,
     private val metadata: V1ObjectMeta,
-    val spec: VirtualServiceSpec
+    // Spec is specificaly a Map instead of a VirtualServiceSpec
+    // because we want to "update" (not "patch") VirtualServices.
+    // Missing fields in VirtualServiceSpec results in additional
+    // fields getting deleted from the Kubernetes resource. Using
+    // a Map guarentees that all fields are present during an update.
+    val spec: Map<String, Any>
 ) : KubernetesObject {
     companion object {
         const val ApiGroup = "networking.istio.io"

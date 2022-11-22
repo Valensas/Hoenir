@@ -1,8 +1,10 @@
 package com.valensas.hoenir.virtualservice
 
+import com.google.gson.Gson
 import com.valensas.hoenir.api.VirtualServiceApi
 import com.valensas.hoenir.crd.HttpElement
 import com.valensas.hoenir.crd.VirtualService
+import com.valensas.hoenir.crd.VirtualServiceSpec
 import com.valensas.hoenir.createOrReplaceNamespacedIngress
 import com.valensas.hoenir.fullname
 import io.kubernetes.client.extended.controller.reconciler.Reconciler
@@ -154,8 +156,9 @@ class VirtualServiceReconciler(
         val className = virtualService.metadata.annotations?.get("istio.valensas.com/ingress-class")
         val isIngressTLS = virtualService.metadata.annotations?.get("istio.valensas.com/ingress-tls") == "true"
         val tlsSecret = virtualService.metadata.annotations?.get("istio.valensas.com/tls-secret")
-        val https = virtualService.spec.http
-        val hosts = virtualService.spec.hosts
+        val spec = Gson().fromJson(Gson().toJson(virtualService.spec), VirtualServiceSpec::class.java)
+        val https = spec.http
+        val hosts = spec.hosts
         val tlsSecretName = if (isIngressTLS) {
             tlsSecret ?: "$name.tls"
         } else {

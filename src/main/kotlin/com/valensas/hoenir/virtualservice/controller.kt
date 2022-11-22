@@ -54,7 +54,7 @@ fun virtualServiceController(
         .watch { workQueue: WorkQueue<Request?>? ->
             ControllerBuilder.controllerWatchBuilder(
                 VirtualService::class.java, workQueue
-            )
+            ).withOnDeleteFilter { _, _ -> false }
                 .build()
         }
         .withReconciler(virtualServiceReconciler)

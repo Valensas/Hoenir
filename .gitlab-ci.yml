@@ -1,0 +1,36 @@
+image: openjdk:17
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+before_script:
+  - export GRADLE_USER_HOME="$(pwd)/.gradle"
+
+cache:
+  paths:
+    - .gradle
+
+stages:
+  - verify
+  - publish
+
+lint:
+  stage: verify
+  script: ./gradlew ktlintCheck
+
+publish:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_TAG'
+  script:
+    - |
+      if grep -Eq "version\s+=\s+\"${CI_COMMIT_TAG}-SNAPSHOT\"" ./build.gradle.kts
+      then
+        echo "Publishing ${CI_COMMIT_TAG} version"
+        ./gradlew jib  -Djib.to.auth.username=${CI_REGISTRY_USER} \
+                       -Djib.to.auth.password=${CI_REGISTRY_PASSWORD} \
+                       --image="$CI_REGISTRY/valensas/tooling/${CI_PROJECT_NAME}:${CI_COMMIT_TAG}"
+      else
+        echo "version '${CI_COMMIT_TAG}-SNAPSHOT' must exist in the build.gradle file."
+        exit 1
+      fi

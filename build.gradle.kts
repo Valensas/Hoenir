@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.valensas"
-version = "0.2.0-SNAPSHOT"
+version = "test-SNAPSHOT"
 
 repositories {
     mavenCentral()

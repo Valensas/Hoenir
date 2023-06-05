@@ -16,17 +16,21 @@ fun virtualServiceInformerCall(
     virtualServiceApi: VirtualServiceApi,
     namespace: String?
 ): (params: CallGeneratorParams) -> Call =
-    if (namespace == null) { params ->
-        virtualServiceApi.clusterInformerCall(
-            params,
-            "istio.valensas.com/ingress=true"
-        )
-    } else { params ->
-        virtualServiceApi.namespacedInformerCall(
-            params,
-            namespace,
-            "istio.valensas.com/ingress=true"
-        )
+    if (namespace == null) {
+        { params ->
+            virtualServiceApi.clusterInformerCall(
+                params,
+                "istio.valensas.com/ingress=true"
+            )
+        }
+    } else {
+        { params ->
+            virtualServiceApi.namespacedInformerCall(
+                params,
+                namespace,
+                "istio.valensas.com/ingress=true"
+            )
+        }
     }
 
 fun virtualServiceController(
@@ -53,7 +57,8 @@ fun virtualServiceController(
     val controller: Controller = ControllerBuilder.defaultBuilder(informerFactory)
         .watch { workQueue: WorkQueue<Request?>? ->
             ControllerBuilder.controllerWatchBuilder(
-                VirtualService::class.java, workQueue
+                VirtualService::class.java,
+                workQueue
             ).withOnDeleteFilter { _, _ -> false }
                 .build()
         }

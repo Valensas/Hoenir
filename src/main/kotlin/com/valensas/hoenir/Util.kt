@@ -21,7 +21,7 @@ fun NetworkingV1Api.createOrReplaceNamespacedIngress(
             null,
             null,
             null,
-            null,
+            null
         )
     } catch (e: ApiException) {
         if (e.code != 404) {
@@ -33,7 +33,7 @@ fun NetworkingV1Api.createOrReplaceNamespacedIngress(
             null,
             null,
             null,
-            null,
+            null
         )
     }
 }

@@ -6,11 +6,10 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "11.3.2"
     id("com.google.cloud.tools.jib") version "3.3.2"
     id("com.github.ben-manes.versions") version "0.46.0"
-
 }
 
 group = "com.valensas"
-version = "0.2.1-SNAPSHOT"
+version = "1.0.0-SNAPSHOT"
 
 repositories {
     mavenCentral()

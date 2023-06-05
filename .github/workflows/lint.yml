@@ -1,0 +1,23 @@
+name: Lint
+
+on:
+  pull_request:
+  workflow_call:
+  push:
+    branches: ['**']
+    # Don't run on tags, docker-publish will call this workflow
+    tags-ignore: ['**']
+
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: oracle
+          java-version: 17
+      - name: Lint
+        run: ./gradlew ktlintCheck

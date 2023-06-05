@@ -51,7 +51,7 @@ class VirtualServiceReconciler(
                         null,
                         null,
                         null,
-                        null,
+                        null
                     )
                 } catch (e: ApiException) {
                     if (e.code != 404) {
@@ -76,7 +76,7 @@ class VirtualServiceReconciler(
     private fun handleVirtualServiceDeletion(
         virtualService: VirtualService,
         name: String,
-        namespace: String,
+        namespace: String
     ) {
         val result = runCatching {
             networkingV1Api.deleteNamespacedIngress(
@@ -87,7 +87,7 @@ class VirtualServiceReconciler(
                 null,
                 null,
                 null,
-                null,
+                null
             )
         }
 
@@ -126,7 +126,7 @@ class VirtualServiceReconciler(
 
     private fun buildRule(
         https: List<HttpElement>,
-        host: String?,
+        host: String?
     ): V1IngressRule {
         val ruleBuilder =
             V1IngressRuleBuilder().let { if (host != null) it.withHost(host) else it }.withNewHttp().withPaths()
@@ -149,7 +149,7 @@ class VirtualServiceReconciler(
     private fun createOrUpdateIngress(
         virtualService: VirtualService,
         name: String,
-        namespace: String,
+        namespace: String
     ) {
         val annotations = virtualService.metadata.annotations
         val labels = virtualService.metadata.labels

@@ -15,35 +15,39 @@ fun grafanaInformerCall(
     coreV1Api: CoreV1Api,
     namespace: String?
 ): (params: CallGeneratorParams) -> Call =
-    if (namespace == null) { params ->
-        coreV1Api.listConfigMapForAllNamespacesCall(
-            null,
-            null,
-            null,
-            "grafana_dashboard=1, grafana.valensas.com/dashboard",
-            null,
-            null,
-            params.resourceVersion,
-            null,
-            params.timeoutSeconds,
-            params.watch,
-            null
-        )
-    } else { params ->
-        coreV1Api.listNamespacedConfigMapCall(
-            namespace,
-            null,
-            null,
-            null,
-            null,
-            "grafana_dashboard=1, grafana.valensas.com/dashboard",
-            null,
-            params.resourceVersion,
-            null,
-            params.timeoutSeconds,
-            params.watch,
-            null
-        )
+    if (namespace == null) {
+        { params ->
+            coreV1Api.listConfigMapForAllNamespacesCall(
+                null,
+                null,
+                null,
+                "grafana_dashboard=1, grafana.valensas.com/dashboard",
+                null,
+                null,
+                params.resourceVersion,
+                null,
+                params.timeoutSeconds,
+                params.watch,
+                null
+            )
+        }
+    } else {
+        { params ->
+            coreV1Api.listNamespacedConfigMapCall(
+                namespace,
+                null,
+                null,
+                null,
+                null,
+                "grafana_dashboard=1, grafana.valensas.com/dashboard",
+                null,
+                params.resourceVersion,
+                null,
+                params.timeoutSeconds,
+                params.watch,
+                null
+            )
+        }
     }
 
 fun grafanaController(
@@ -68,7 +72,8 @@ fun grafanaController(
     val controller: Controller = ControllerBuilder.defaultBuilder(informerFactory)
         .watch { workQueue: WorkQueue<Request?>? ->
             ControllerBuilder.controllerWatchBuilder(
-                V1ConfigMap::class.java, workQueue
+                V1ConfigMap::class.java,
+                workQueue
             )
                 .build()
         }

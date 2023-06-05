@@ -2,10 +2,21 @@
 
 Hoenir is a composition of multiple Kubernetes controllers that makes your life easier.
 
+## Running the project
+
+To run from source, use `./gradlew run`.
+
+A Docker image is also available: `docker run -v ~/.kube/config:/root/.kube/config valensas/hoenir`.
+
+Hoenir uses the same configuration as `kubectl` to connect to your cluster. Therefore, you can set any environment
+variables necessary to connect to your cluster such as `KUBECONFIG` or `KUBECONTEXT`. When running within Kubernetes,
+it will by default pick up the service account credentials and auto-discover the master endpoint.
+
+
 ## Grafana Dashboard Controller
 
 Downloads Grafana dashboards into ConfigMaps given a dashboard id and an optional revision.
-The ConfigMap is then usable as [persistent Grafana dashboard](https://rancher.com/docs/rancher/v2.6/en/monitoring-alerting/guides/persist-grafana/).
+The ConfigMap is then usable as [persistent Grafana dashboard](https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/monitoring-alerting-guides/create-persistent-grafana-dashboard#docusaurus_skipToContent_fallback).
 
 ### Usage
 
@@ -38,7 +49,8 @@ Use the following environment variable to configure the controller:
 
 ## Virtual Service Controller
 
-Creates an Ingress to Istio's Ingress Gateway for a VirtualService definition.
+Creates an Ingress to Istio's Ingress Gateway for a VirtualService definition. This setup is mainly useful when
+using both an Ingress Controller and Istio but want to have a single point of entry for both.
 
 ### Usage
 

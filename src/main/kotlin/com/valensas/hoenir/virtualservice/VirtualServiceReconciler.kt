@@ -108,8 +108,8 @@ class VirtualServiceReconciler(
         type: String,
         uriValue: String,
         ruleBuilder: V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder>,
-		ingressGatewayService: String,
-		ingressGatewayPort: Int
+        ingressGatewayService: String,
+        ingressGatewayPort: Int
     ): V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder> {
         return ruleBuilder
             .addNewPath()
@@ -129,8 +129,8 @@ class VirtualServiceReconciler(
     private fun buildRule(
         https: List<HttpElement>,
         host: String?,
-		ingressGatewayService: String,
-		ingressGatewayPort: Int
+        ingressGatewayService: String,
+        ingressGatewayPort: Int
     ): V1IngressRule {
         val ruleBuilder =
             V1IngressRuleBuilder().let { if (host != null) it.withHost(host) else it }.withNewHttp().withPaths()
@@ -160,8 +160,8 @@ class VirtualServiceReconciler(
         val className = annotations?.get("istio.valensas.com/ingress-class")
         val isIngressTLS = annotations?.get("istio.valensas.com/ingress-tls") == "true"
         val tlsSecret = annotations?.get("istio.valensas.com/tls-secret")
-		val ingressGatewayService = annotations?.get("istio.valensas.com/ingressgateway-service") ?: istioConfig.ingressGatewayService
-		val ingressGatewayPort = annotations?.get("istio.valensas.com/ingressgateway-port")?.toIntOrNull() ?: istioConfig.ingressGatewayPort
+        val ingressGatewayService = annotations?.get("istio.valensas.com/ingressgateway-service") ?: istioConfig.ingressGatewayService
+        val ingressGatewayPort = annotations?.get("istio.valensas.com/ingressgateway-port")?.toIntOrNull() ?: istioConfig.ingressGatewayPort
 
         val spec = Gson().fromJson(Gson().toJson(virtualService.spec), VirtualServiceSpec::class.java)
         val https = spec.http

@@ -26,6 +26,7 @@ fun grafanaInformerCall(
                 null,
                 params.resourceVersion,
                 null,
+                true,
                 params.timeoutSeconds,
                 params.watch,
                 null
@@ -43,6 +44,7 @@ fun grafanaInformerCall(
                 null,
                 params.resourceVersion,
                 null,
+                true,
                 params.timeoutSeconds,
                 params.watch,
                 null

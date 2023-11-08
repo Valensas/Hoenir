@@ -74,6 +74,11 @@ metadata:
     # Use this secret for TLS. f TLS is enabled without a
     # secret, a unique name is generated.
     istio.valensas.com/tls-secret: 'my-secret'
+    # The ingress gateway service to use for the created Ingress
+    istio.valensas.com/ingressgateway-service: 'istio-ingressgateway'
+    # The ingress gateway port to use for the created Ingress
+    istio.valensas.com/ingressgateway-port: '8080'
+    
 spec:
   hosts:
   - example.com

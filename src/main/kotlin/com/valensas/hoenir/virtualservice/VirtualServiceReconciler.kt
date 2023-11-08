@@ -107,7 +107,9 @@ class VirtualServiceReconciler(
     private fun buildPath(
         type: String,
         uriValue: String,
-        ruleBuilder: V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder>
+        ruleBuilder: V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder>,
+		ingressGatewayService: String,
+		ingressGatewayPort: Int
     ): V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder> {
         return ruleBuilder
             .addNewPath()
@@ -115,9 +117,9 @@ class VirtualServiceReconciler(
             .withPathType(type)
             .withNewBackend()
             .withNewService()
-            .withName(istioConfig.ingressGatewayService)
+            .withName(ingressGatewayService)
             .withNewPort()
-            .withNumber(istioConfig.ingressGatewayPort)
+            .withNumber(ingressGatewayPort)
             .endPort()
             .endService()
             .endBackend()
@@ -126,7 +128,9 @@ class VirtualServiceReconciler(
 
     private fun buildRule(
         https: List<HttpElement>,
-        host: String?
+        host: String?,
+		ingressGatewayService: String,
+		ingressGatewayPort: Int
     ): V1IngressRule {
         val ruleBuilder =
             V1IngressRuleBuilder().let { if (host != null) it.withHost(host) else it }.withNewHttp().withPaths()
@@ -134,9 +138,9 @@ class VirtualServiceReconciler(
             val uri = http.match?.get(0)?.uri
             if (http.route != null || http.redirect != null || http.delegate != null) {
                 if (uri?.exact != null) {
-                    buildPath("Exact", uri.exact, it)
+                    buildPath("Exact", uri.exact, it, ingressGatewayService, ingressGatewayPort)
                 } else if (uri?.prefix != null || http.match == null) {
-                    buildPath("Prefix", uri?.prefix ?: "/", it)
+                    buildPath("Prefix", uri?.prefix ?: "/", it, ingressGatewayService, ingressGatewayPort)
                 } else {
                     it
                 }
@@ -153,9 +157,12 @@ class VirtualServiceReconciler(
     ) {
         val annotations = virtualService.metadata.annotations
         val labels = virtualService.metadata.labels
-        val className = virtualService.metadata.annotations?.get("istio.valensas.com/ingress-class")
-        val isIngressTLS = virtualService.metadata.annotations?.get("istio.valensas.com/ingress-tls") == "true"
-        val tlsSecret = virtualService.metadata.annotations?.get("istio.valensas.com/tls-secret")
+        val className = annotations?.get("istio.valensas.com/ingress-class")
+        val isIngressTLS = annotations?.get("istio.valensas.com/ingress-tls") == "true"
+        val tlsSecret = annotations?.get("istio.valensas.com/tls-secret")
+		val ingressGatewayService = annotations?.get("istio.valensas.com/ingressgateway-service") ?: istioConfig.ingressGatewayService
+		val ingressGatewayPort = annotations?.get("istio.valensas.com/ingressgateway-port")?.toIntOrNull() ?: istioConfig.ingressGatewayPort
+
         val spec = Gson().fromJson(Gson().toJson(virtualService.spec), VirtualServiceSpec::class.java)
         val https = spec.http
         val hosts = spec.hosts
@@ -165,7 +172,7 @@ class VirtualServiceReconciler(
             null
         }
 
-        val rules = hosts?.map { buildRule(https, it) } ?: listOf(buildRule(https, null))
+        val rules = hosts?.map { buildRule(https, it, ingressGatewayService, ingressGatewayPort) } ?: listOf(buildRule(https, null, ingressGatewayService, ingressGatewayPort))
 
         val ingress = V1IngressBuilder()
             .withApiVersion("networking.k8s.io/v1")

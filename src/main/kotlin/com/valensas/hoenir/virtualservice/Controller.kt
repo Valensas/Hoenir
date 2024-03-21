@@ -14,13 +14,13 @@ import okhttp3.Call
 
 fun virtualServiceInformerCall(
     virtualServiceApi: VirtualServiceApi,
-    namespace: String?
+    namespace: String?,
 ): (params: CallGeneratorParams) -> Call =
     if (namespace == null) {
         { params ->
             virtualServiceApi.clusterInformerCall(
                 params,
-                "istio.valensas.com/ingress=true"
+                "istio.valensas.com/ingress=true",
             )
         }
     } else {
@@ -28,7 +28,7 @@ fun virtualServiceInformerCall(
             virtualServiceApi.namespacedInformerCall(
                 params,
                 namespace,
-                "istio.valensas.com/ingress=true"
+                "istio.valensas.com/ingress=true",
             )
         }
     }
@@ -39,34 +39,37 @@ fun virtualServiceController(
     istioConfig: IstioConfg,
     informerFactory: SharedInformerFactory,
     namespace: String?,
-    workers: Int
+    workers: Int,
 ): Controller {
-    val virtualServiceInformer = informerFactory.sharedIndexInformerFor(
-        virtualServiceInformerCall(virtualServiceApi, namespace),
-        VirtualService::class.java,
-        VirtualServiceList::class.java
-    )
+    val virtualServiceInformer =
+        informerFactory.sharedIndexInformerFor(
+            virtualServiceInformerCall(virtualServiceApi, namespace),
+            VirtualService::class.java,
+            VirtualServiceList::class.java,
+        )
 
-    val virtualServiceReconciler = VirtualServiceReconciler(
-        virtualServiceInformer,
-        virtualServiceApi,
-        networkingV1Api,
-        istioConfig = istioConfig
-    )
+    val virtualServiceReconciler =
+        VirtualServiceReconciler(
+            virtualServiceInformer,
+            virtualServiceApi,
+            networkingV1Api,
+            istioConfig = istioConfig,
+        )
 
-    val controller: Controller = ControllerBuilder.defaultBuilder(informerFactory)
-        .watch { workQueue: WorkQueue<Request?>? ->
-            ControllerBuilder.controllerWatchBuilder(
-                VirtualService::class.java,
-                workQueue
-            ).withOnDeleteFilter { _, _ -> false }
-                .build()
-        }
-        .withReconciler(virtualServiceReconciler)
-        .withName("virtualService-controller")
-        .withWorkerCount(workers)
-        .withReadyFunc(virtualServiceInformer::hasSynced)
-        .build()
+    val controller: Controller =
+        ControllerBuilder.defaultBuilder(informerFactory)
+            .watch { workQueue: WorkQueue<Request?>? ->
+                ControllerBuilder.controllerWatchBuilder(
+                    VirtualService::class.java,
+                    workQueue,
+                ).withOnDeleteFilter { _, _ -> false }
+                    .build()
+            }
+            .withReconciler(virtualServiceReconciler)
+            .withName("virtualService-controller")
+            .withWorkerCount(workers)
+            .withReadyFunc(virtualServiceInformer::hasSynced)
+            .build()
 
     return controller
 }

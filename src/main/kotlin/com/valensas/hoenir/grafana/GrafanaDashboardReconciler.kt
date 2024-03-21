@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 class GrafanaDashboardReconciler(
     configMapInformer: SharedIndexInformer<V1ConfigMap>,
     private val api: CoreV1Api,
-    private val defaultDatasourceName: String
+    private val defaultDatasourceName: String,
 ) : Reconciler {
     private val configMapLister: Lister<V1ConfigMap> = Lister(configMapInformer.indexer)
     private val dashboardCache: MutableMap<String, Pair<String, String?>> = mutableMapOf()
@@ -51,7 +51,7 @@ class GrafanaDashboardReconciler(
     private fun updateConfigMap(
         configMap: V1ConfigMap,
         id: String,
-        revision: String?
+        revision: String?,
     ) {
         val name = configMap.metadata!!.name
         logger.info("Updating ConfigMap {}, with dashboard id {}, revision {}", configMap.fullname(), id, revision)
@@ -67,17 +67,21 @@ class GrafanaDashboardReconciler(
             configMap.metadata!!.putAnnotationsItem("grafana.valensas.com/error", e.message)
         }
 
-        api.replaceNamespacedConfigMap(name, configMap.metadata!!.namespace, configMap, null, null, null, null)
+        api.replaceNamespacedConfigMap(name, configMap.metadata!!.namespace, configMap)
     }
 
-    private fun downloadDashboard(id: String, revision: String?): String {
+    private fun downloadDashboard(
+        id: String,
+        revision: String?,
+    ): String {
         val rev = revision ?: "latest"
         logger.info("Downloading dashboard {}, revision {}", id, rev)
 
         val client = OkHttpClient()
-        val request = okhttp3.Request.Builder()
-            .url("https://grafana.com/api/dashboards/$id/revisions/$rev/download")
-            .build()
+        val request =
+            okhttp3.Request.Builder()
+                .url("https://grafana.com/api/dashboards/$id/revisions/$rev/download")
+                .build()
 
         val response = client.newCall(request).execute()
         val bodyStr = response.body?.string()!!
@@ -94,9 +98,10 @@ class GrafanaDashboardReconciler(
 
         logger.info("Successfully downloaded dashboard {}, revision {}", id, rev)
 
-        val datasource = inputs.find {
-            (it as? Map<*, *>)?.get("type") == "datasource"
-        } as? Map<*, *>
+        val datasource =
+            inputs.find {
+                (it as? Map<*, *>)?.get("type") == "datasource"
+            } as? Map<*, *>
         val datasourceName = datasource?.get("name") as? String ?: return bodyStr
 
         val toBeReplaced = "\${$datasourceName}"

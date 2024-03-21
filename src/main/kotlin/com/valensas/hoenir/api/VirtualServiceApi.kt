@@ -9,20 +9,24 @@ import io.kubernetes.client.util.generic.GenericKubernetesApi
 import okhttp3.Call
 
 class VirtualServiceApi(
-    apiClient: ApiClient
+    apiClient: ApiClient,
 ) {
     private val customObjectsApi = CustomObjectsApi(apiClient)
 
-    private val client = GenericKubernetesApi(
-        VirtualService::class.java,
-        VirtualServiceList::class.java,
-        VirtualService.ApiGroup,
-        VirtualService.ApiVersion,
-        VirtualService.Plural,
-        customObjectsApi
-    )
+    private val client =
+        GenericKubernetesApi(
+            VirtualService::class.java,
+            VirtualServiceList::class.java,
+            VirtualService.API_GROUP,
+            VirtualService.API_VERSION,
+            VirtualService.PLURAL,
+            customObjectsApi,
+        )
 
-    fun get(name: String, namespace: String): VirtualService {
+    fun get(
+        name: String,
+        namespace: String,
+    ): VirtualService {
         val response = client.get(namespace, name).throwsApiException()
         return response.`object`
     }
@@ -31,42 +35,39 @@ class VirtualServiceApi(
         client.update(virtualService).throwsApiException()
     }
 
-    fun namespacedInformerCall(params: CallGeneratorParams, namespace: String, labelSelector: String? = null): Call {
-        return customObjectsApi.listNamespacedCustomObjectCall(
-            VirtualService.ApiGroup,
-            VirtualService.ApiVersion,
-            namespace,
-            VirtualService.Plural,
-            null,
-            null,
-            null,
-            null,
-            labelSelector,
-            null,
-            params.resourceVersion,
-            null,
-            params.timeoutSeconds,
-            params.watch,
-            null
-        )
+    fun namespacedInformerCall(
+        params: CallGeneratorParams,
+        namespace: String,
+        labelSelector: String? = null,
+    ): Call {
+        return customObjectsApi
+            .listNamespacedCustomObject(
+                VirtualService.API_GROUP,
+                VirtualService.API_VERSION,
+                namespace,
+                VirtualService.PLURAL,
+            )
+            .labelSelector(labelSelector)
+            .resourceVersion(params.resourceVersion)
+            .timeoutSeconds(params.timeoutSeconds)
+            .watch(params.watch)
+            .buildCall(null)
     }
 
-    fun clusterInformerCall(params: CallGeneratorParams, labelSelector: String? = null): Call {
-        return customObjectsApi.listClusterCustomObjectCall(
-            VirtualService.ApiGroup,
-            VirtualService.ApiVersion,
-            VirtualService.Plural,
-            null,
-            null,
-            null,
-            null,
-            labelSelector,
-            null,
-            params.resourceVersion,
-            null,
-            params.timeoutSeconds,
-            params.watch,
-            null
-        )
+    fun clusterInformerCall(
+        params: CallGeneratorParams,
+        labelSelector: String? = null,
+    ): Call {
+        return customObjectsApi
+            .listClusterCustomObject(
+                VirtualService.API_GROUP,
+                VirtualService.API_VERSION,
+                VirtualService.PLURAL,
+            )
+            .labelSelector(labelSelector)
+            .resourceVersion(params.resourceVersion)
+            .timeoutSeconds(params.timeoutSeconds)
+            .watch(params.watch)
+            .buildCall(null)
     }
 }

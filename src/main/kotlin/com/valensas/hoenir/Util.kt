@@ -10,18 +10,12 @@ fun Request.fullname() = "$namespace/$name"
 
 fun KubernetesObject.fullname() = "${metadata.namespace!!}/${metadata.name!!}"
 
-fun NetworkingV1Api.createOrReplaceNamespacedIngress(
-    ingress: V1Ingress
-) {
+fun NetworkingV1Api.createOrReplaceNamespacedIngress(ingress: V1Ingress) {
     try {
         replaceNamespacedIngress(
             ingress.metadata!!.name!!,
             ingress.metadata!!.namespace!!,
             ingress,
-            null,
-            null,
-            null,
-            null
         )
     } catch (e: ApiException) {
         if (e.code != 404) {
@@ -30,10 +24,6 @@ fun NetworkingV1Api.createOrReplaceNamespacedIngress(
         createNamespacedIngress(
             ingress.metadata!!.namespace!!,
             ingress,
-            null,
-            null,
-            null,
-            null
         )
     }
 }

@@ -23,14 +23,14 @@ import org.slf4j.LoggerFactory
 data class IstioConfg(
     val namespace: String,
     val ingressGatewayService: String,
-    val ingressGatewayPort: Int
+    val ingressGatewayPort: Int,
 )
 
 class VirtualServiceReconciler(
     virtualServiceInformer: SharedIndexInformer<VirtualService>,
     private val virtualServiceApi: VirtualServiceApi,
     private val networkingV1Api: NetworkingV1Api,
-    private val istioConfig: IstioConfg
+    private val istioConfig: IstioConfg,
 ) : Reconciler {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val virtualServiceLister: Lister<VirtualService> = Lister(virtualServiceInformer.indexer)
@@ -46,12 +46,6 @@ class VirtualServiceReconciler(
                     networkingV1Api.deleteNamespacedIngress(
                         ingressName,
                         istioConfig.namespace,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
                     )
                 } catch (e: ApiException) {
                     if (e.code != 404) {
@@ -76,20 +70,15 @@ class VirtualServiceReconciler(
     private fun handleVirtualServiceDeletion(
         virtualService: VirtualService,
         name: String,
-        namespace: String
+        namespace: String,
     ) {
-        val result = runCatching {
-            networkingV1Api.deleteNamespacedIngress(
-                name,
-                namespace,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            )
-        }
+        val result =
+            runCatching {
+                networkingV1Api.deleteNamespacedIngress(
+                    name,
+                    namespace,
+                )
+            }
 
         val e = result.exceptionOrNull()
         if (result.isSuccess || (e is ApiException && e.code == 404)) {
@@ -107,10 +96,10 @@ class VirtualServiceReconciler(
     private fun buildPath(
         type: String,
         uriValue: String,
-        ruleBuilder: V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder>,
+        ruleBuilder: V1IngressRuleFluent<V1IngressRuleBuilder>.HttpNested<V1IngressRuleBuilder>,
         ingressGatewayService: String,
-        ingressGatewayPort: Int
-    ): V1IngressRuleFluent.HttpNested<V1IngressRuleBuilder> {
+        ingressGatewayPort: Int,
+    ): V1IngressRuleFluent<V1IngressRuleBuilder>.HttpNested<V1IngressRuleBuilder> {
         return ruleBuilder
             .addNewPath()
             .withPath(uriValue)
@@ -130,7 +119,7 @@ class VirtualServiceReconciler(
         https: List<HttpElement>,
         host: String?,
         ingressGatewayService: String,
-        ingressGatewayPort: Int
+        ingressGatewayPort: Int,
     ): V1IngressRule {
         val ruleBuilder =
             V1IngressRuleBuilder().let { if (host != null) it.withHost(host) else it }.withNewHttp().withPaths()
@@ -153,7 +142,7 @@ class VirtualServiceReconciler(
     private fun createOrUpdateIngress(
         virtualService: VirtualService,
         name: String,
-        namespace: String
+        namespace: String,
     ) {
         val annotations = virtualService.metadata.annotations
         val labels = virtualService.metadata.labels
@@ -166,46 +155,51 @@ class VirtualServiceReconciler(
         val spec = Gson().fromJson(Gson().toJson(virtualService.spec), VirtualServiceSpec::class.java)
         val https = spec.http
         val hosts = spec.hosts
-        val tlsSecretName = if (isIngressTLS) {
-            tlsSecret ?: "$name.tls"
-        } else {
-            null
-        }
-
-        val rules = hosts?.map { buildRule(https, it, ingressGatewayService, ingressGatewayPort) } ?: listOf(buildRule(https, null, ingressGatewayService, ingressGatewayPort))
-
-        val ingress = V1IngressBuilder()
-            .withApiVersion("networking.k8s.io/v1")
-            .withKind("Ingress")
-            .withNewMetadata()
-            .withAnnotations<String, String>(annotations)
-            .withLabels<String, String>(labels)
-            .withNamespace(namespace)
-            .withName(name)
-            .endMetadata()
-            .withNewSpec()
-            .let {
-                if (!className.isNullOrBlank()) {
-                    it.withIngressClassName(className)
-                } else {
-                    it
-                }
+        val tlsSecretName =
+            if (isIngressTLS) {
+                tlsSecret ?: "$name.tls"
+            } else {
+                null
             }
-            .let {
-                if (isIngressTLS) {
-                    it
-                        .addNewTl()
-                        .withHosts()
-                        .addAllToHosts(hosts)
-                        .withSecretName(tlsSecretName)
-                        .endTl()
-                } else {
-                    it
+
+        val rules =
+            hosts?.map {
+                buildRule(https, it, ingressGatewayService, ingressGatewayPort)
+            } ?: listOf(buildRule(https, null, ingressGatewayService, ingressGatewayPort))
+
+        val ingress =
+            V1IngressBuilder()
+                .withApiVersion("networking.k8s.io/v1")
+                .withKind("Ingress")
+                .withNewMetadata()
+                .withAnnotations<String, String>(annotations)
+                .withLabels<String, String>(labels)
+                .withNamespace(namespace)
+                .withName(name)
+                .endMetadata()
+                .withNewSpec()
+                .let {
+                    if (!className.isNullOrBlank()) {
+                        it.withIngressClassName(className)
+                    } else {
+                        it
+                    }
                 }
-            }
-            .withRules(rules)
-            .endSpec()
-            .build()
+                .let {
+                    if (isIngressTLS) {
+                        it
+                            .addNewTl()
+                            .withHosts()
+                            .addAllToHosts(hosts)
+                            .withSecretName(tlsSecretName)
+                            .endTl()
+                    } else {
+                        it
+                    }
+                }
+                .withRules(rules)
+                .endSpec()
+                .build()
 
         if (virtualService.metadata.finalizers?.contains("istio.valensas.com/ingress") != true) {
             virtualService.metadata.addFinalizersItem("istio.valensas.com/ingress")

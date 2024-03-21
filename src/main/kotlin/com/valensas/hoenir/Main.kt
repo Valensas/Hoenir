@@ -11,11 +11,12 @@ import io.kubernetes.client.openapi.apis.NetworkingV1Api
 import io.kubernetes.client.util.ClientBuilder
 import java.lang.Integer.max
 
-fun istioConfig() = IstioConfg(
-    namespace = System.getenv("ISTIO_NAMESPACE") ?: "istio-system",
-    ingressGatewayService = System.getenv("ISTIO_INGRESSGATEWAY_SERVICE") ?: "istio-ingressgateway",
-    ingressGatewayPort = System.getenv("ISTIO_INGRESSGATEWAY_PORT")?.toInt() ?: 8080
-)
+fun istioConfig() =
+    IstioConfg(
+        namespace = System.getenv("ISTIO_NAMESPACE") ?: "istio-system",
+        ingressGatewayService = System.getenv("ISTIO_INGRESSGATEWAY_SERVICE") ?: "istio-ingressgateway",
+        ingressGatewayPort = System.getenv("ISTIO_INGRESSGATEWAY_PORT")?.toInt() ?: 8080,
+    )
 
 fun main() {
     val client = ClientBuilder.standard().build()
@@ -33,27 +34,29 @@ fun main() {
         val grafanaDefaultDatasourceName = System.getenv("GRAFANA_DEFAULT_DATASOURCE_NAME") ?: "Prometheus"
         val workers = System.getenv("GRAFANA_WORKERS")?.toInt() ?: (cpus / 2)
 
-        val grafanaController = grafanaController(
-            coreV1Api = coreV1Api,
-            informerFactory = informerFactory,
-            namespace = namespace,
-            defaultDatasourceName = grafanaDefaultDatasourceName,
-            workers = max(workers, 1)
-        )
+        val grafanaController =
+            grafanaController(
+                coreV1Api = coreV1Api,
+                informerFactory = informerFactory,
+                namespace = namespace,
+                defaultDatasourceName = grafanaDefaultDatasourceName,
+                workers = max(workers, 1),
+            )
         controllerManagerBuilder.addController(grafanaController)
     }
 
     if (System.getenv("VIRTUALSERVICE_DISABLED") == null) {
         val workers = System.getenv("VIRTUALSERVICE_WORKERS")?.toInt() ?: (cpus / 2)
 
-        val virtualServiceController = virtualServiceController(
-            networkingV1Api = networkingV1Api,
-            virtualServiceApi = virtualServiceApi,
-            istioConfig = istioConfig(),
-            informerFactory = informerFactory,
-            namespace = namespace,
-            workers = max(workers, 1)
-        )
+        val virtualServiceController =
+            virtualServiceController(
+                networkingV1Api = networkingV1Api,
+                virtualServiceApi = virtualServiceApi,
+                istioConfig = istioConfig(),
+                informerFactory = informerFactory,
+                namespace = namespace,
+                workers = max(workers, 1),
+            )
         controllerManagerBuilder.addController(virtualServiceController)
     }
 

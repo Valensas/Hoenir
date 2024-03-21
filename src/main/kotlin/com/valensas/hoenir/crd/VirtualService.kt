@@ -14,47 +14,53 @@ data class VirtualService(
     // Missing fields in VirtualServiceSpec results in additional
     // fields getting deleted from the Kubernetes resource. Using
     // a Map guarentees that all fields are present during an update.
-    val spec: Map<String, Any>
+    val spec: Map<String, Any>,
 ) : KubernetesObject {
     companion object {
-        const val ApiGroup = "networking.istio.io"
-        const val ApiVersion = "v1beta1"
-        const val Plural = "virtualservices"
+        const val API_GROUP = "networking.istio.io"
+        const val API_VERSION = "v1beta1"
+        const val PLURAL = "virtualservices"
     }
+
     override fun getApiVersion(): String = apiVersion
+
     override fun getKind(): String = kind
+
     override fun getMetadata(): V1ObjectMeta = metadata
 }
 
 data class VirtualServiceSpec(
     val hosts: List<String>?,
-    val http: List<HttpElement>
+    val http: List<HttpElement>,
 )
 
 data class HttpElement(
     val match: List<HTTPMatchRequest>?,
     val route: Any?,
     val redirect: Any?,
-    val delegate: Any?
+    val delegate: Any?,
 )
 
 data class HTTPMatchRequest(
-    val uri: HTTPMatchRequestUri?
+    val uri: HTTPMatchRequestUri?,
 )
 
 data class HTTPMatchRequestUri(
     val exact: String?,
-    val prefix: String?
+    val prefix: String?,
 )
 
 data class VirtualServiceList(
     private val apiVersion: String,
     private val kind: String,
     private val metadata: V1ListMeta,
-    private val items: MutableList<VirtualService>
+    private val items: MutableList<VirtualService>,
 ) : KubernetesListObject {
     override fun getApiVersion(): String = apiVersion
+
     override fun getKind(): String = kind
+
     override fun getMetadata(): V1ListMeta = metadata
+
     override fun getItems(): MutableList<VirtualService> = items
 }

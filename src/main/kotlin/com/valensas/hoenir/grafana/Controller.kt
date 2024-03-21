@@ -13,42 +13,27 @@ import okhttp3.Call
 
 fun grafanaInformerCall(
     coreV1Api: CoreV1Api,
-    namespace: String?
+    namespace: String?,
 ): (params: CallGeneratorParams) -> Call =
     if (namespace == null) {
         { params ->
-            coreV1Api.listConfigMapForAllNamespacesCall(
-                null,
-                null,
-                null,
-                "grafana_dashboard=1, grafana.valensas.com/dashboard",
-                null,
-                null,
-                params.resourceVersion,
-                null,
-                true,
-                params.timeoutSeconds,
-                params.watch,
-                null
-            )
+            coreV1Api
+                .listConfigMapForAllNamespaces()
+                .labelSelector("grafana_dashboard=1, grafana.valensas.com/dashboard")
+                .resourceVersion(params.resourceVersion)
+                .timeoutSeconds(params.timeoutSeconds)
+                .watch(params.watch)
+                .buildCall(null)
         }
     } else {
         { params ->
-            coreV1Api.listNamespacedConfigMapCall(
-                namespace,
-                null,
-                null,
-                null,
-                null,
-                "grafana_dashboard=1, grafana.valensas.com/dashboard",
-                null,
-                params.resourceVersion,
-                null,
-                true,
-                params.timeoutSeconds,
-                params.watch,
-                null
-            )
+            coreV1Api
+                .listNamespacedConfigMap(namespace)
+                .labelSelector("grafana_dashboard=1, grafana.valensas.com/dashboard")
+                .resourceVersion(params.resourceVersion)
+                .timeoutSeconds(params.timeoutSeconds)
+                .watch(params.watch)
+                .buildCall(null)
         }
     }
 
@@ -57,33 +42,36 @@ fun grafanaController(
     informerFactory: SharedInformerFactory,
     namespace: String?,
     defaultDatasourceName: String,
-    workers: Int
+    workers: Int,
 ): Controller {
-    val configInformer = informerFactory.sharedIndexInformerFor(
-        grafanaInformerCall(coreV1Api, namespace),
-        V1ConfigMap::class.java,
-        V1ConfigMapList::class.java
-    )
+    val configInformer =
+        informerFactory.sharedIndexInformerFor(
+            grafanaInformerCall(coreV1Api, namespace),
+            V1ConfigMap::class.java,
+            V1ConfigMapList::class.java,
+        )
 
-    val grafanaDashboardReconciler = GrafanaDashboardReconciler(
-        configInformer,
-        coreV1Api,
-        defaultDatasourceName
-    )
+    val grafanaDashboardReconciler =
+        GrafanaDashboardReconciler(
+            configInformer,
+            coreV1Api,
+            defaultDatasourceName,
+        )
 
-    val controller: Controller = ControllerBuilder.defaultBuilder(informerFactory)
-        .watch { workQueue: WorkQueue<Request?>? ->
-            ControllerBuilder.controllerWatchBuilder(
-                V1ConfigMap::class.java,
-                workQueue
-            )
-                .build()
-        }
-        .withReconciler(grafanaDashboardReconciler)
-        .withName("grafana-dashboard-controller")
-        .withWorkerCount(workers)
-        .withReadyFunc(configInformer::hasSynced)
-        .build()
+    val controller: Controller =
+        ControllerBuilder.defaultBuilder(informerFactory)
+            .watch { workQueue: WorkQueue<Request?>? ->
+                ControllerBuilder.controllerWatchBuilder(
+                    V1ConfigMap::class.java,
+                    workQueue,
+                )
+                    .build()
+            }
+            .withReconciler(grafanaDashboardReconciler)
+            .withName("grafana-dashboard-controller")
+            .withWorkerCount(workers)
+            .withReadyFunc(configInformer::hasSynced)
+            .build()
 
     return controller
 }

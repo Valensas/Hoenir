@@ -16,7 +16,7 @@ fun NetworkingV1Api.createOrReplaceNamespacedIngress(ingress: V1Ingress) {
             ingress.metadata!!.name!!,
             ingress.metadata!!.namespace!!,
             ingress,
-        )
+        ).execute()
     } catch (e: ApiException) {
         if (e.code != 404) {
             throw e
@@ -24,6 +24,6 @@ fun NetworkingV1Api.createOrReplaceNamespacedIngress(ingress: V1Ingress) {
         createNamespacedIngress(
             ingress.metadata!!.namespace!!,
             ingress,
-        )
+        ).execute()
     }
 }

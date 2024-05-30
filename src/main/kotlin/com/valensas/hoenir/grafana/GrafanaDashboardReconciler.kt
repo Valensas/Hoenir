@@ -67,7 +67,7 @@ class GrafanaDashboardReconciler(
             configMap.metadata!!.putAnnotationsItem("grafana.valensas.com/error", e.message)
         }
 
-        api.replaceNamespacedConfigMap(name, configMap.metadata!!.namespace, configMap)
+        api.replaceNamespacedConfigMap(name, configMap.metadata!!.namespace, configMap).execute()
     }
 
     private fun downloadDashboard(
